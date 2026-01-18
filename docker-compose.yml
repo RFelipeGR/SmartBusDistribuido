@@ -1,0 +1,58 @@
+services:
+  rabbitmq:
+    image: rabbitmq:3-management
+    hostname: rabbitmq
+    ports:
+      - "5672:5672"     # AMQP
+      - "15672:15672"   # UI de RabbitMQ (admin)
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+
+  routes-service:
+    build: ./routes_service
+    container_name: routes-service
+    environment:
+      - PORT=8001
+    expose:
+      - "8001"
+    depends_on:
+      - rabbitmq
+
+  telemetry-service:
+    build: ./telemetry_service
+    container_name: telemetry-service
+    environment:
+      - PORT=8002
+      - RABBITMQ_HOST=rabbitmq
+      - RABBITMQ_USER=guest
+      - RABBITMQ_PASS=guest
+      - RABBITMQ_QUEUE=telemetry.events
+    expose:
+      - "8002"
+    depends_on:
+      - rabbitmq
+
+  gateway:
+    build: ./gateway
+    container_name: gateway
+    environment:
+      - PORT=8000
+      - ROUTES_URL=http://routes-service:8001
+      - TELEMETRY_URL=http://telemetry-service:8002
+    ports:
+      - "8000:8000"
+    depends_on:
+      - routes-service
+      - telemetry-service
+
+  worker-service:
+    build: ./worker_service
+    container_name: worker-service
+    environment:
+      - RABBITMQ_HOST=rabbitmq
+      - RABBITMQ_USER=guest
+      - RABBITMQ_PASS=guest
+      - RABBITMQ_QUEUE=telemetry.events
+    depends_on:
+      - rabbitmq
