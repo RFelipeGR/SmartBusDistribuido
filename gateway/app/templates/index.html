@@ -2,73 +2,818 @@
 <html lang="es">
 <head>
   <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>SmartBus - Gateway</title>
   <style>
-    body { font-family: Arial, sans-serif; margin: 24px; }
-    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-    .card { border: 1px solid #ddd; border-radius: 8px; padding: 16px; }
-    button { padding: 8px 12px; cursor: pointer; }
-    input { padding: 8px; width: 100%; }
-    pre { background: #f7f7f7; padding: 12px; border-radius: 8px; overflow:auto; }
+    :root{
+      --bg:#0b1220;
+      --card:#111a2e;
+      --card2:#0f172a;
+      --text:#e5e7eb;
+      --muted:#9ca3af;
+      --line:rgba(255,255,255,.10);
+
+      --primary:#4f46e5;
+      --primary2:#4338ca;
+
+      --ok:#16a34a;
+      --warn:#f59e0b;
+      --bad:#dc2626;
+
+      --shadow: 0 10px 30px rgba(0,0,0,.35);
+      --radius: 14px;
+    }
+
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, "Noto Sans", "Helvetica Neue", sans-serif;
+      background: radial-gradient(1200px 600px at 20% -10%, rgba(79,70,229,.35), transparent 60%),
+                  radial-gradient(900px 500px at 90% 0%, rgba(245,158,11,.25), transparent 55%),
+                  var(--bg);
+      color: var(--text);
+      padding: 22px;
+    }
+
+    .wrap{max-width: 1100px; margin: 0 auto;}
+    .top{
+      display:flex; align-items:flex-start; justify-content:space-between; gap:16px;
+      margin-bottom: 16px;
+    }
+    h1{font-size: 28px; margin:0 0 6px 0; letter-spacing:.2px;}
+    .sub{margin:0; color: var(--muted); line-height:1.35}
+    .pill{
+      display:inline-flex; gap:10px; align-items:center;
+      padding: 10px 12px; border: 1px solid var(--line);
+      border-radius: 999px; background: rgba(255,255,255,.04);
+      box-shadow: var(--shadow);
+      white-space:nowrap;
+      font-size: 13px;
+    }
+    .dot{width:9px; height:9px; border-radius:999px; background: var(--warn);}
+    .grid{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+    @media (max-width: 900px){
+      .grid{grid-template-columns:1fr}
+      .top{flex-direction:column}
+      .pill{width:fit-content}
+    }
+
+    .card{
+      background: linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.02));
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 16px;
+      overflow:hidden;
+    }
+    .card h2{margin:0 0 10px 0; font-size: 18px;}
+    .card h3{margin:14px 0 8px 0; font-size: 15px; color: #cbd5e1;}
+
+    .row{display:flex; gap:10px; align-items:center; flex-wrap:wrap;}
+    .btn{
+      appearance:none; border:none;
+      background: linear-gradient(180deg, var(--primary), var(--primary2));
+      color:#fff; padding: 10px 12px;
+      border-radius: 12px; cursor:pointer; font-weight: 650;
+      box-shadow: 0 10px 20px rgba(79,70,229,.25);
+      transition: transform .06s ease, filter .15s ease;
+    }
+    .btn:hover{filter:brightness(1.05)}
+    .btn:active{transform: translateY(1px)}
+    .btn.secondary{
+      background: rgba(255,255,255,.07);
+      border: 1px solid var(--line);
+      box-shadow:none;
+      font-weight: 600;
+    }
+    .btn.small{padding: 8px 10px; border-radius: 10px; font-size: 13px;}
+
+    .field{
+      display:grid; gap:6px;
+      min-width: 180px;
+      flex: 1 1 220px;
+    }
+    label{font-size: 12px; color: var(--muted);}
+    input{
+      width:100%;
+      padding: 10px 11px;
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      background: rgba(15,23,42,.65);
+      color: var(--text);
+      outline:none;
+    }
+    input::placeholder{color: rgba(156,163,175,.65)}
+    .hint{font-size: 12px; color: var(--muted); margin: 6px 0 0 0;}
+
+    .box{
+      margin-top: 10px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: rgba(15,23,42,.55);
+      padding: 12px;
+      overflow:auto;
+      max-height: 280px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      font-size: 12.5px;
+      color: #dbeafe;
+    }
+
+    .result{
+      margin-top: 10px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 12px;
+      background: rgba(255,255,255,.03);
+    }
+    .status{
+      display:flex; gap:10px; align-items:flex-start; justify-content:space-between;
+      flex-wrap:wrap;
+    }
+    .badge{
+      display:inline-flex; align-items:center; gap:8px;
+      padding: 7px 10px; border-radius: 999px;
+      font-weight: 750; letter-spacing: .2px;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,.04);
+    }
+    .badge .bDot{width:10px;height:10px;border-radius:999px;background: var(--warn);}
+    .badge.ok .bDot{background: var(--ok)}
+    .badge.bad .bDot{background: var(--bad)}
+    .badge.warn .bDot{background: var(--warn)}
+
+    .bigMsg{
+      font-size: 16px; margin: 0; font-weight: 700;
+    }
+    .kpis{
+      display:grid; grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px; margin-top: 10px;
+    }
+    @media (max-width: 900px){ .kpis{grid-template-columns:1fr} }
+    .kpi{
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 10px 12px;
+      background: rgba(255,255,255,.03);
+    }
+    .kpi .t{font-size: 12px; color: var(--muted); margin-bottom: 4px;}
+    .kpi .v{font-size: 15px; font-weight: 800;}
+
+    details{
+      margin-top: 10px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 10px 12px;
+      background: rgba(255,255,255,.02);
+    }
+    summary{cursor:pointer; color:#cbd5e1; font-weight: 650;}
+    .footer{
+      margin-top: 14px;
+      color: var(--muted);
+      font-size: 13px;
+      display:flex; justify-content:space-between; gap:10px; flex-wrap:wrap;
+    }
+    a{color:#93c5fd}
+    .error{
+      color:#fecaca;
+      background: rgba(220,38,38,.12);
+      border: 1px solid rgba(220,38,38,.25);
+      border-radius: 12px;
+      padding: 10px 12px;
+      margin-top: 10px;
+      white-space: pre-wrap;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      font-size: 12.5px;
+    }
+
+    .list{
+  display:grid;
+  gap:10px;
+  margin-top: 12px;
+}
+.item{
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 12px;
+  background: rgba(255,255,255,.03);
+}
+.itemTop{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:10px;
+  flex-wrap:wrap;
+}
+.titleLine{
+  font-weight: 800;
+  letter-spacing: .2px;
+}
+.meta{
+  margin-top: 6px;
+  color: var(--muted);
+  font-size: 12px;
+}
+.tag{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: rgba(255,255,255,.04);
+  font-weight: 750;
+  font-size: 12px;
+}
+.tag.ok{color:#bbf7d0}
+.tag.bad{color:#fecaca}
+.tag.warn{color:#fde68a}
+.tag .bDot{width:10px;height:10px;border-radius:999px;background:var(--warn);}
+.tag.ok .bDot{background: var(--ok)}
+.tag.bad .bDot{background: var(--bad)}
+.tag.warn .bDot{background: var(--warn)}
+
+.table{
+  width:100%;
+  border-collapse: collapse;
+  margin-top: 10px;
+  overflow:hidden;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+}
+.table th, .table td{
+  padding: 10px;
+  border-bottom: 1px solid var(--line);
+  text-align:left;
+  font-size: 13px;
+}
+.table th{
+  color: #cbd5e1;
+  background: rgba(255,255,255,.03);
+  font-weight: 800;
+}
+.table tr:last-child td{border-bottom:none;}
+.smallMuted{color: var(--muted); font-size: 12px;}
+
+
+
+
+
+/* =========================================================
+   3 BLOQUES: Rutas (cyan), Telemetría (violet), Decisión (green/amber/red)
+   ========================================================= */
+:root{
+  --routes-accent: #38bdf8;        /* cyan */
+  --routes-soft: rgba(56,189,248,.14);
+
+  --telemetry-accent: #8b5cf6;     /* violet */
+  --telemetry-soft: rgba(139,92,246,.14);
+
+  --decision-accent: #22c55e;      /* green base */
+  --decision-soft: rgba(34,197,94,.12);
+
+  --decision-warn: #f59e0b;        /* amber */
+  --decision-bad: #ef4444;         /* red */
+
+  /* si ya tienes estos, no pasa nada; quedan como fallback */
+  --ok: #22c55e;
+  --warn: #f59e0b;
+  --bad: #ef4444;
+}
+
+/* Card accent top border + glow */
+.card.routes{
+  border-top: 3px solid var(--routes-accent);
+  box-shadow: 0 0 0 1px rgba(255,255,255,.05), 0 12px 40px rgba(0,0,0,.35), 0 0 30px var(--routes-soft);
+}
+.card.telemetry{
+  border-top: 3px solid var(--telemetry-accent);
+  box-shadow: 0 0 0 1px rgba(255,255,255,.05), 0 12px 40px rgba(0,0,0,.35), 0 0 30px var(--telemetry-soft);
+}
+.card.decision{
+  border-top: 3px solid var(--decision-accent);
+  box-shadow: 0 0 0 1px rgba(255,255,255,.05), 0 12px 40px rgba(0,0,0,.35), 0 0 30px var(--decision-soft);
+}
+
+/* Titulos por bloque */
+.card.routes h2{ color: #7dd3fc; }
+.card.telemetry h2{ color: #c4b5fd; }
+.card.decision h2{ color: #86efac; }
+
+/* Botones principales por bloque */
+.btn.routes{
+  background: linear-gradient(135deg, rgba(56,189,248,.95), rgba(14,165,233,.9));
+  border-color: rgba(56,189,248,.35);
+}
+.btn.telemetry{
+  background: linear-gradient(135deg, rgba(139,92,246,.95), rgba(99,102,241,.9));
+  border-color: rgba(139,92,246,.35);
+}
+.btn.decision{
+  background: linear-gradient(135deg, rgba(34,197,94,.95), rgba(22,163,74,.9));
+  border-color: rgba(34,197,94,.35);
+}
+
+/* Hover suave */
+.btn.routes:hover{ filter: brightness(1.05); }
+.btn.telemetry:hover{ filter: brightness(1.05); }
+.btn.decision:hover{ filter: brightness(1.05); }
+
+/* Chips/Tags por bloque */
+.tag.routes{ border-color: rgba(56,189,248,.35); background: rgba(56,189,248,.08); }
+.tag.telemetry{ border-color: rgba(139,92,246,.35); background: rgba(139,92,246,.08); }
+.tag.decision{ border-color: rgba(34,197,94,.35); background: rgba(34,197,94,.08); }
+
+/* Decision badge: ya tienes ok/bad/warn. Aseguramos colores */
+.tag.ok { color: #bbf7d0; }
+.tag.ok .bDot{ background: var(--ok); }
+
+.tag.bad { color: #fecaca; }
+.tag.bad .bDot{ background: var(--bad); }
+
+.tag.warn { color: #fde68a; }
+.tag.warn .bDot{ background: var(--warn); }
+
+/* KPI cards dentro de decision: acento leve */
+.card.decision .kpi{
+  border: 1px solid rgba(34,197,94,.18);
+  background: rgba(34,197,94,.05);
+}
+
+/* Separación visual dentro de cada card */
+.sectionTitle{
+  margin-top: 14px;
+  font-weight: 800;
+  color: rgba(255,255,255,.88);
+}
+.sectionTitle.routes{ color: #7dd3fc; }
+.sectionTitle.telemetry{ color: #c4b5fd; }
+.sectionTitle.decision{ color: #86efac; }
+
+
+
+
+
+
   </style>
 </head>
-<body>
-  <h1>SmartBus (Distribuido) - Demo</h1>
-  <p>Frontend simple servido por el Gateway. El Gateway consume routes-service y telemetry-service usando DNS interno de Docker.</p>
 
-  <div class="grid">
-    <div class="card">
-      <h2>Rutas</h2>
-      <button onclick="loadRoutes()">Cargar rutas</button>
-      <pre id="routesOut">...</pre>
+<body>
+<div class="wrap">
+
+  <div class="top">
+    <div>
+      <h1>SmartBus (Distribuido)</h1>
+      <p class="sub">
+        Demo web mínima: <b>Gateway</b> consume <b>routes-service</b> y <b>telemetry-service</b> por DNS interno de Docker, y telemetría publica eventos a <b>RabbitMQ</b>.
+      </p>
     </div>
 
-    <div class="card">
-      <h2>Telemetría</h2>
-      <button onclick="loadBuses()">Listar buses</button>
-      <pre id="busesOut">...</pre>
-
-      <h3>Actualizar bus (publica evento a RabbitMQ)</h3>
-      <label>Bus ID</label>
-      <input id="busId" value="BUS-001" />
-      <label>lat</label>
-      <input id="lat" value="-0.1810" />
-      <label>lon</label>
-      <input id="lon" value="-78.4680" />
-      <label>occupancy</label>
-      <input id="occ" value="15" />
-      <button onclick="updateBus()">Enviar update</button>
-      <pre id="updateOut">...</pre>
+    <div class="pill" id="healthPill" title="Estado general (Gateway)">
+      <span class="dot" id="healthDot"></span>
+      <span id="healthText">Verificando servicios…</span>
     </div>
   </div>
 
-  <p>RabbitMQ UI: <a href="http://localhost:15672" target="_blank">http://localhost:15672</a> (guest/guest)</p>
+  <div class="grid">
+    <!-- RUTAS -->
+    <div class="card routes">
+      <h2>Rutas</h2>
+      <div class="row">
+        <button class="btn routes" onclick="loadRoutes()">Cargar rutas</button>
+        <button class="btn secondary small" onclick="clearRoutes()">Limpiar</button>
+      </div>
+
+      
+      <div class="hint">Se listan rutas desde <b>routes-service</b>. (Puedes mostrar el JSON como evidencia, pero no es obligatorio.)</div>
+
+        <div class="list" id="routesPretty">
+            <div class="smallMuted">Presiona “Cargar rutas” para ver el listado.</div>
+        </div>
+
+      <details>
+        <summary>Ver datos crudos (JSON)</summary>
+        <div class="box" id="routesBox">...</div>
+      </details>
+    </div>
+
+    <!-- TELEMETRÍA -->
+    <div class="card telemetry">
+      <h2>Telemetría</h2>
+      <div class="row">
+        <button class="btn telemetry" onclick="loadBuses()">Listar buses</button>
+        <button class="btn secondary small" onclick="clearTelemetry()">Limpiar</button>
+      </div>
+
+        <div id="telemetryPretty" class="list">
+        <div class="smallMuted">Presiona “Listar buses” para ver el listado.</div>
+        </div>
+
+
+      <details>
+        <summary>Ver buses (JSON)</summary>
+        <div class="box" id="busesBox">...</div>
+      </details>
+
+      <h3>Actualizar bus (publica evento a RabbitMQ)</h3>
+      <div class="row">
+        <div class="field">
+          <label>Bus ID</label>
+          <input id="busId" value="BUS-001" />
+        </div>
+        <div class="field">
+          <label>Latitud</label>
+          <input id="lat" value="-0.1810" />
+        </div>
+        <div class="field">
+          <label>Longitud</label>
+          <input id="lon" value="-78.4680" />
+        </div>
+        <div class="field">
+          <label>Ocupación</label>
+          <input id="occ" value="15" />
+        </div>
+      </div>
+
+      <div class="row" style="margin-top:10px;">
+        <button class="btn telemetry" onclick="updateBus()">Enviar update</button>
+        <button class="btn secondary small" onclick="clearBox('updateBox')">Limpiar</button>
+      </div>
+
+      <details>
+        <summary>Ver respuesta del update (JSON)</summary>
+        <div class="box" id="updateBox">...</div>
+      </details>
+    </div>
+  </div>
+
+  <!-- ALCANZO -->
+  <div class="card decision" style="margin-top:14px;">
+    <h2>¿Alcanzo la parada?</h2>
+    <p class="sub" style="margin-top:-2px;">
+      Cálculo simple (sin Google): distancia + ETA bus vs ETA caminando + margen de seguridad.
+    </p>
+
+    <div class="row">
+      <div class="field">
+        <label>Route ID</label>
+        <input id="routeId" value="1" />
+      </div>
+      <div class="field">
+        <label>Bus ID</label>
+        <input id="catchBusId" value="BUS-001" />
+      </div>
+      <div class="field">
+        <label>Velocidad bus (m/s)</label>
+        <input id="busSpeed" value="8.0" />
+      </div>
+      <div class="field">
+        <label>Velocidad caminando (m/s)</label>
+        <input id="walkSpeed" value="1.4" />
+      </div>
+      <div class="field">
+        <label>Margen seguridad (seg)</label>
+        <input id="marginS" value="60" />
+      </div>
+    </div>
+
+    <div class="hint">
+      Opcional: si ingresas tu ubicación, el sistema estima si alcanzas caminando. Si lo dejas vacío, asume que ya estás en la parada.
+    </div>
+
+    <div class="row" style="margin-top:8px;">
+      <div class="field">
+        <label>Tu lat</label>
+        <input id="userLat" placeholder="ej: -0.1870" />
+      </div>
+      <div class="field">
+        <label>Tu lon</label>
+        <input id="userLon" placeholder="ej: -78.4340" />
+      </div>
+      <div class="field" style="align-self:end; min-width: 200px;">
+        <button class="btn decision" onclick="canICatch()">Evaluar</button>
+      </div>
+    </div>
+
+    <div id="catchError" class="error" style="display:none;"></div>
+
+    <div class="result" id="catchResult" style="display:none;">
+      <div class="status">
+        <div>
+          <p class="bigMsg" id="catchMsg">—</p>
+          <div class="hint" id="catchHint">—</div>
+        </div>
+        <div class="badge warn" id="catchBadge">
+          <span class="bDot"></span><span id="catchBadgeText">—</span>
+        </div>
+      </div>
+
+      <div class="kpis">
+        <div class="kpi">
+          <div class="t">Distancia bus → parada</div>
+          <div class="v" id="kpiDistBus">—</div>
+        </div>
+        <div class="kpi">
+          <div class="t">ETA del bus</div>
+          <div class="v" id="kpiEtaBus">—</div>
+        </div>
+        <div class="kpi">
+          <div class="t">ETA caminando</div>
+          <div class="v" id="kpiEtaUser">—</div>
+        </div>
+      </div>
+
+      <details>
+        <summary>Ver datos técnicos (JSON) (opcional)</summary>
+        <div class="box" id="catchRaw">...</div>
+      </details>
+    </div>
+  </div>
+
+  <div class="footer">
+    <div>RabbitMQ UI: <a href="http://localhost:15672" target="_blank">http://localhost:15672</a> (guest/guest)</div>
+    <div class="hint">Tip: actualiza el bus con coordenadas más cercanas a la parada para ver el caso “Apúrate”.</div>
+  </div>
+
+</div>
 
 <script>
-async function loadRoutes() {
-  const res = await fetch('/api/routes');
-  document.getElementById('routesOut').textContent = JSON.stringify(await res.json(), null, 2);
-}
+  // ---------------------------
+  // Helpers UI
+  // ---------------------------
+  function show(el){ el.style.display = ""; }
+  function hide(el){ el.style.display = "none"; }
 
-async function loadBuses() {
-  const res = await fetch('/api/buses');
-  document.getElementById('busesOut').textContent = JSON.stringify(await res.json(), null, 2);
-}
+  function clearBox(id){
+    const el = document.getElementById(id);
+    if (el) el.textContent = "...";
+  }
 
-async function updateBus() {
-  const busId = document.getElementById('busId').value;
-  const body = {
-    lat: parseFloat(document.getElementById('lat').value),
-    lon: parseFloat(document.getElementById('lon').value),
-    occupancy: parseInt(document.getElementById('occ').value, 10),
-  };
-  const res = await fetch(`/api/buses/${busId}/update`, {
-    method: 'POST',
-    headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify(body)
-  });
-  document.getElementById('updateOut').textContent = JSON.stringify(await res.json(), null, 2);
-}
+  function fmtMeters(m){
+    if (m == null || isNaN(m)) return "—";
+    if (m >= 1000) return (m/1000).toFixed(2) + " km";
+    return Math.round(m) + " m";
+  }
+
+  function fmtSeconds(s){
+    if (s == null || isNaN(s)) return "—";
+    s = Math.max(0, s);
+    const min = Math.floor(s/60);
+    const sec = Math.round(s%60);
+    if (min <= 0) return `${sec} s`;
+    return `${min} min ${sec}s`;
+  }
+
+  // ---------------------------
+  // Health
+  // ---------------------------
+  async function setHealth(){
+    const dot = document.getElementById('healthDot');
+    const text = document.getElementById('healthText');
+
+    try{
+      const r = await fetch('/health');
+      if(!r.ok) throw new Error('Gateway no responde');
+      dot.style.background = 'var(--ok)';
+      text.textContent = 'Gateway activo (servicios disponibles)';
+    }catch(e){
+      dot.style.background = 'var(--bad)';
+      text.textContent = 'Gateway no disponible';
+    }
+  }
+  setHealth();
+
+  // ---------------------------
+  // Clear (bonito + JSON)
+  // ---------------------------
+  function clearRoutes(){
+    clearBox('routesBox');
+    const pretty = document.getElementById('routesPretty');
+    if (pretty) pretty.innerHTML = '<div class="smallMuted">Presiona “Cargar rutas” para ver el listado.</div>';
+  }
+
+  function clearTelemetry(){
+    clearBox('busesBox');
+    const pretty = document.getElementById('telemetryPretty');
+    if (pretty) pretty.innerHTML = '<div class="smallMuted">Presiona “Listar buses” para ver el listado.</div>';
+  }
+
+  // ---------------------------
+  // Rutas (bonito + JSON)
+  // ---------------------------
+  async function loadRoutes() {
+    const res = await fetch('/api/routes');
+    const data = await res.json();
+
+    // Evidencia técnica
+    document.getElementById('routesBox').textContent = JSON.stringify(data, null, 2);
+
+    // Vista bonita
+    const wrap = document.getElementById('routesPretty');
+    if (!wrap) return;
+
+    if (!Array.isArray(data) || data.length === 0) {
+      wrap.innerHTML = '<div class="smallMuted">No hay rutas disponibles.</div>';
+      return;
+    }
+
+    wrap.innerHTML = data.map(r => {
+      const status = (r.status || "UNKNOWN").toUpperCase();
+      const tagClass = status === "ACTIVE" ? "ok" : "warn";
+
+      const stop = (r.stop_lat != null && r.stop_lon != null)
+        ? `Parada: (${Number(r.stop_lat).toFixed(4)}, ${Number(r.stop_lon).toFixed(4)})`
+        : "Parada: —";
+
+      return `
+        <div class="item">
+          <div class="itemTop">
+            <div>
+              <div class="titleLine">#${r.id} · ${r.origin} → ${r.destination}</div>
+              <div class="meta">${r.duration_minutes} min · $${r.price_usd} · ${stop}</div>
+            </div>
+            <div class="tag ${tagClass}">
+              <span class="bDot"></span><span>${status}</span>
+            </div>
+          </div>
+        </div>
+      `;
+    }).join("");
+  }
+
+  // ---------------------------
+  // Telemetría (bonito + JSON)
+  // ---------------------------
+  async function loadBuses() {
+    const res = await fetch('/api/buses');
+    const data = await res.json();
+
+    // Evidencia técnica
+    document.getElementById('busesBox').textContent = JSON.stringify(data, null, 2);
+
+    const wrap = document.getElementById('telemetryPretty');
+    if (!wrap) return;
+
+    const buses = data?.buses || [];
+
+    if (!Array.isArray(buses) || buses.length === 0) {
+      wrap.innerHTML = '<div class="smallMuted">No hay buses disponibles.</div>';
+      return;
+    }
+
+    wrap.innerHTML = `
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Bus</th>
+            <th>Acción</th>
+            <th>Último estado</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${buses.map(id => `
+            <tr>
+              <td><b>${id}</b></td>
+              <td><button class="btn secondary small" onclick="loadBusDetail('${id}')">Ver detalle</button></td>
+              <td class="smallMuted" id="busRow_${id.replace(/[^a-zA-Z0-9_-]/g,'_')}">—</td>
+            </tr>
+          `).join("")}
+        </tbody>
+      </table>
+      <div class="hint">“Ver detalle” consulta <b>telemetry-service</b> para mostrar lat/lon/ocupación y timestamp.</div>
+    `;
+  }
+
+  async function loadBusDetail(busId){
+    const rowId = "busRow_" + busId.replace(/[^a-zA-Z0-9_-]/g,'_');
+    const cell = document.getElementById(rowId);
+    if (!cell) return;
+
+    cell.textContent = "Cargando…";
+
+    try{
+      const res = await fetch(`/api/buses/${encodeURIComponent(busId)}`);
+      const text = await res.text();
+      if(!res.ok){
+        cell.textContent = `ERROR ${res.status}`;
+        return;
+      }
+      const b = JSON.parse(text);
+
+      const lat = (b.lat != null) ? Number(b.lat).toFixed(4) : "—";
+      const lon = (b.lon != null) ? Number(b.lon).toFixed(4) : "—";
+      const occ = (b.occupancy != null) ? b.occupancy : "—";
+      const ts = b.last_updated_utc || "—";
+
+      cell.textContent = `Lat ${lat}, Lon ${lon} · Ocupación ${occ} · ${ts}`;
+    }catch(e){
+      cell.textContent = "ERROR";
+    }
+  }
+
+  // ---------------------------
+  // Update bus (queda igual)
+  // ---------------------------
+    async function updateBus() {
+    const busId = document.getElementById('busId').value;
+
+    const body = {
+        lat: parseFloat(document.getElementById('lat').value),
+        lon: parseFloat(document.getElementById('lon').value),
+        occupancy: parseInt(document.getElementById('occ').value, 10),
+    };
+
+    const res = await fetch(`/api/buses/${busId}/update`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(body)
+    });
+
+    const data = await res.json();
+    document.getElementById('updateBox').textContent = JSON.stringify(data, null, 2);
+
+    // 👇 ESTO ES LO NUEVO
+    await loadBuses();
+    }
+
+
+  // ---------------------------
+  // ¿Alcanzo la parada? (igual)
+  // ---------------------------
+  async function canICatch() {
+    const errBox = document.getElementById('catchError');
+    const resultBox = document.getElementById('catchResult');
+
+    hide(errBox);
+    hide(resultBox);
+
+    try {
+      const routeId = document.getElementById('routeId').value;
+      const busId = document.getElementById('catchBusId').value;
+      const busSpeed = document.getElementById('busSpeed').value;
+      const walkSpeed = document.getElementById('walkSpeed').value;
+      const marginS = document.getElementById('marginS').value;
+
+      const userLat = document.getElementById('userLat').value.trim();
+      const userLon = document.getElementById('userLon').value.trim();
+
+      let url = `/api/can-i-catch?route_id=${routeId}&bus_id=${encodeURIComponent(busId)}&bus_speed_mps=${busSpeed}&walk_speed_mps=${walkSpeed}&safety_margin_s=${marginS}`;
+
+      if (userLat !== "" && userLon !== "") {
+        url += `&user_lat=${encodeURIComponent(userLat)}&user_lon=${encodeURIComponent(userLon)}`;
+      }
+
+      const res = await fetch(url);
+      const text = await res.text();
+
+      if (!res.ok) {
+        errBox.textContent = `ERROR HTTP ${res.status}\n\n${text}`;
+        show(errBox);
+        return;
+      }
+
+      const data = JSON.parse(text);
+
+      document.getElementById('catchMsg').textContent = data.message || "—";
+
+      const hint =
+        `Bus actualizado: ${data.bus?.last_updated_utc || "—"} | Modo usuario: ${data.user_mode || "—"} | Margen: ${data.safety_margin_s ?? "—"}s`;
+      document.getElementById('catchHint').textContent = hint;
+
+      document.getElementById('kpiDistBus').textContent = fmtMeters(data.distance_bus_to_stop_m);
+      document.getElementById('kpiEtaBus').textContent = fmtSeconds(data.eta_bus_seconds);
+      document.getElementById('kpiEtaUser').textContent = fmtSeconds(data.eta_user_seconds);
+
+      const badge = document.getElementById('catchBadge');
+      const badgeText = document.getElementById('catchBadgeText');
+      badge.classList.remove('ok','bad','warn');
+
+      const decision = (data.decision || "").toUpperCase();
+      if (decision === "ALCANZAS") {
+        badge.classList.add('ok');
+        badgeText.textContent = "ALCANZAS";
+      } else if (decision === "NO_ALCANZAS") {
+        badge.classList.add('bad');
+        badgeText.textContent = "NO ALCANZAS";
+      } else if (decision === "YA_MUY_CERCA") {
+        badge.classList.add('warn');
+        badgeText.textContent = "APÚRATE";
+      } else {
+        badge.classList.add('warn');
+        badgeText.textContent = decision || "—";
+      }
+
+      document.getElementById('catchRaw').textContent = JSON.stringify(data, null, 2);
+      show(resultBox);
+
+    } catch (e) {
+      errBox.textContent = `ERROR JS\n\n${e}`;
+      show(errBox);
+    }
+  }
 </script>
 </body>
 </html>

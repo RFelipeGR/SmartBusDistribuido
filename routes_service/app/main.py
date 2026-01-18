@@ -12,6 +12,8 @@ class RouteOut(BaseModel):
     duration_minutes: int
     price_usd: float
     status: str
+    stop_lat: float
+    stop_lon: float
 
 @app.on_event("startup")
 def startup():
