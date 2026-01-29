@@ -1,0 +1,37 @@
+services:
+  # 1) Gateway PUBLICO
+  - type: web
+    name: smartbus-gateway
+    env: docker
+    dockerfilePath: ./gateway/Dockerfile
+    dockerContext: ./gateway
+    autoDeploy: true
+    envVars:
+      - key: ROUTES_SERVICE_URL
+        value: http://smartbus-routes:8000
+      - key: TELEMETRY_SERVICE_URL
+        value: http://smartbus-telemetry:8000
+
+  # 2) Routes PRIVADO
+  - type: pserv
+    name: smartbus-routes
+    env: docker
+    dockerfilePath: ./routes_service/Dockerfile
+    dockerContext: ./routes_service
+    autoDeploy: true
+
+  # 3) Telemetry PRIVADO
+  - type: pserv
+    name: smartbus-telemetry
+    env: docker
+    dockerfilePath: ./telemetry_service/Dockerfile
+    dockerContext: ./telemetry_service
+    autoDeploy: true
+
+  # 4) Worker (background)
+  - type: worker
+    name: smartbus-worker
+    env: docker
+    dockerfilePath: ./worker_service/Dockerfile
+    dockerContext: ./worker_service
+    autoDeploy: true
